@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="referrer" content="no-referrer">
+<title>Italian Diceware</title>
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --surface: #131316;
+    --surface-2: #1b1b20;
+    --border: #26262c;
+    --border-strong: #3a3a42;
+    --text: #e6e6e8;
+    --text-dim: #8b8b92;
+    --text-faint: #5a5a62;
+    --accent: #9ae6b4;
+    --accent-strong: #68d391;
+    --accent-bg: #1a2620;
+    --error: #fca5a5;
+    --error-bg: #2a1818;
+    --mono: ui-monospace, "SF Mono", "Menlo", "Consolas", "DejaVu Sans Mono", monospace;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html, body { background: var(--bg); }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.55;
+    padding: 3rem 1.25rem 4rem;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  main {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  .masthead {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    margin-bottom: 2.5rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1.5rem;
+  }
+  .die-icon {
+    flex-shrink: 0;
+    color: var(--accent-strong);
+  }
+  h1 {
+    margin: 0;
+    font-weight: 400;
+    font-size: 1.5rem;
+    letter-spacing: -0.01em;
+    color: var(--text);
+  }
+
+  /* Sections */
+  section { margin-bottom: 1rem; }
+
+  .block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 1.25rem;
+  }
+  .block + .block { margin-top: 0.75rem; }
+
+  /* Import */
+  .import-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  input[type="file"] {
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    max-width: 100%;
+  }
+  input[type="file"]::file-selector-button {
+    background: var(--surface-2);
+    color: var(--text);
+    border: 1px solid var(--border-strong);
+    padding: 0.45rem 0.9rem;
+    font-family: var(--sans);
+    font-size: 0.85rem;
+    cursor: pointer;
+    margin-right: 0.75rem;
+  }
+  input[type="file"]::file-selector-button:hover {
+    background: var(--border);
+  }
+
+  .error {
+    margin-top: 0.9rem;
+    padding: 0.7rem 0.85rem;
+    background: var(--error-bg);
+    border: 1px solid #4a2525;
+    color: var(--error);
+    font-family: var(--mono);
+    font-size: 0.82rem;
+  }
+
+  /* Passphrase display */
+  .display-wrap {
+    position: relative;
+  }
+  .display-label {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 0.6rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .entropy {
+    color: var(--accent);
+    letter-spacing: 0.08em;
+  }
+  .entropy .num { color: var(--accent-strong); }
+
+  #passphrase {
+    font-family: var(--mono);
+    font-size: 1.35rem;
+    font-weight: 500;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    padding: 1.1rem 1.2rem;
+    min-height: 3.6em;
+    display: flex;
+    align-items: center;
+    word-break: break-all;
+    user-select: all;
+    letter-spacing: 0.01em;
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    align-items: center;
+  }
+
+  button {
+    background: var(--surface-2);
+    color: var(--text);
+    border: 1px solid var(--border-strong);
+    padding: 0.55rem 1rem;
+    font-family: var(--sans);
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s;
+  }
+  button:hover { background: var(--border); }
+  button:active { background: var(--border-strong); }
+  button:focus-visible {
+    outline: none;
+    border-color: var(--accent-strong);
+  }
+
+  button.primary {
+    background: transparent;
+    border-color: var(--accent-strong);
+    color: var(--accent);
+  }
+  button.primary:hover {
+    background: var(--accent-bg);
+  }
+
+  .copy-feedback {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--accent-strong);
+    opacity: 0;
+    transition: opacity 0.2s;
+    margin-left: 0.25rem;
+  }
+  .copy-feedback.visible { opacity: 1; }
+
+  /* Options */
+  .options {
+    display: grid;
+    gap: 1.1rem;
+  }
+
+  .opt {
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  .opt-label {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  input[type="text"], select {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border-strong);
+    padding: 0.55rem 0.7rem;
+    font-family: var(--mono);
+    font-size: 0.9rem;
+    width: 100%;
+    max-width: 100%;
+  }
+  input[type="text"]:focus, select:focus {
+    outline: none;
+    border-color: var(--accent-strong);
+  }
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--text-dim) 50%),
+                      linear-gradient(135deg, var(--text-dim) 50%, transparent 50%);
+    background-position: calc(100% - 14px) 50%, calc(100% - 9px) 50%;
+    background-size: 5px 5px;
+    background-repeat: no-repeat;
+    padding-right: 2rem;
+  }
+
+  .radio-group, .check-row {
+    display: grid;
+    gap: 0.35rem;
+  }
+  .radio-group label, .check-row label {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    cursor: pointer;
+    font-size: 0.92rem;
+    color: var(--text);
+    padding: 0.25rem 0;
+  }
+  input[type="radio"], input[type="checkbox"] {
+    accent-color: var(--accent-strong);
+    width: 1rem;
+    height: 1rem;
+    margin: 0;
+  }
+
+  /* Wordlist status */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    padding: 0.7rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    margin-top: 1rem;
+  }
+  .status-bar .ok::before {
+    content: "●";
+    color: var(--accent-strong);
+    margin-right: 0.5rem;
+  }
+  .status-bar button {
+    padding: 0.3rem 0.7rem;
+    font-size: 0.75rem;
+    font-family: var(--sans);
+  }
+
+  /* Footer */
+  footer {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--text-faint);
+    letter-spacing: 0.05em;
+    text-align: center;
+  }
+  footer a {
+    color: var(--text-dim);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--text-faint);
+  }
+  footer a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+  [hidden] { display: none !important; }
+
+  @media (max-width: 480px) {
+    body { padding: 1.5rem 1rem 2.5rem; }
+    h1 { font-size: 1.3rem; }
+    #passphrase { font-size: 1.05rem; padding: 0.9rem 1rem; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header class="masthead">
+    <svg class="die-icon" width="30" height="30" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <rect x="2.25" y="2.25" width="19.5" height="19.5" rx="3.5" ry="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <circle cx="7" cy="7" r="1.6" fill="currentColor"/>
+      <circle cx="17" cy="7" r="1.6" fill="currentColor"/>
+      <circle cx="12" cy="12" r="1.6" fill="currentColor"/>
+      <circle cx="7" cy="17" r="1.6" fill="currentColor"/>
+      <circle cx="17" cy="17" r="1.6" fill="currentColor"/>
+    </svg>
+    <h1>Diceware generator</h1>
+  </header>
+
+  <section id="import-section">
+    <div class="block import-block">
+      <label class="opt-label" for="file-input" data-i18n-text="importLabel"></label>
+      <input type="file" id="file-input" accept=".txt,text/plain">
+      <div id="import-error" class="error" hidden></div>
+    </div>
+  </section>
+
+  <section id="generator-section" hidden>
+    <div class="block display-wrap">
+      <div class="display-label">
+        <span data-i18n-text="passphraseLabel"></span>
+        <span class="entropy"><span class="num" id="entropy-num">0</span> <span data-i18n-text="bits"></span></span>
+      </div>
+      <div id="passphrase" aria-live="polite"></div>
+      <div class="actions">
+        <button id="copy-btn" data-i18n-text="copy"></button>
+        <button id="generate-btn" class="primary" data-i18n-text="generate"></button>
+        <span class="copy-feedback" id="copy-feedback" data-i18n-text="copied"></span>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="options">
+        <div class="opt">
+          <label class="opt-label" for="num-words" data-i18n-text="numWords"></label>
+          <select id="num-words">
+            <option value="5">5</option>
+            <option value="6" selected>6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+          </select>
+        </div>
+
+        <div class="opt">
+          <label class="opt-label" for="separator" data-i18n-text="separator"></label>
+          <input type="text" id="separator" value="-" maxlength="16" autocomplete="off" spellcheck="false">
+        </div>
+
+        <div class="opt">
+          <span class="opt-label" data-i18n-text="capitalization"></span>
+          <div class="radio-group" role="radiogroup">
+            <label><input type="radio" name="cap" value="none" checked><span data-i18n-text="capNone"></span></label>
+            <label><input type="radio" name="cap" value="first"><span data-i18n-text="capFirst"></span></label>
+            <label><input type="radio" name="cap" value="random"><span data-i18n-text="capRandom"></span></label>
+          </div>
+        </div>
+
+        <div class="opt">
+          <span class="opt-label" data-i18n-text="digitLabel"></span>
+          <div class="check-row">
+            <label><input type="checkbox" id="include-digit"><span data-i18n-text="includeDigit"></span></label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="status-bar">
+      <span class="ok" data-i18n-text="wordlistLoaded"></span>
+      <button id="remove-wordlist-btn" data-i18n-text="removeWordlist"></button>
+    </div>
+  </section>
+
+  <footer>
+    <span data-i18n-text="footerNote"></span>
+  </footer>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  // --- Constants ---
+  const STORAGE_KEY = "diceware-it-wordlist-v4";
+  const EXPECTED_LENGTH = 7776;
+  const BEGIN_MARKER = "BEGIN_word_list_diceware_it-IT";
+  const END_MARKER = "END_word_list_diceware_it-IT";
+
+  // --- i18n ---
+  // Keys ending with "Html" may contain hardcoded, trusted HTML (no user input).
+  // Error strings composed from file content are injected via textContent only.
+  const T = {
+    en: {
+      importLabel: "Import wordlist (.txt)",
+      passphraseLabel: "Passphrase",
+      bits: "bits of entropy",
+      copy: "Copy",
+      generate: "Regenerate",
+      copied: "✓ copied",
+      numWords: "Number of words",
+      separator: "Separator",
+      capitalization: "Capitalization",
+      capNone: "None",
+      capFirst: "Capitalize the first letter of every word",
+      capRandom: "Capitalize one random word",
+      digitLabel: "Extra",
+      includeDigit: "Append a random digit (0–9) to one random word",
+      wordlistLoaded: "Wordlist cached (7776 words)",
+      removeWordlist: "Remove",
+      footerNote: "All randomness from crypto.getRandomValues() · no network requests",
+      errMarkers: "Markers not found. The file must contain both BEGIN_word_list_diceware_it-IT and END_word_list_diceware_it-IT on their own lines.",
+      errCount: (n) => `Expected ${EXPECTED_LENGTH} words between the markers, found ${n}.`,
+      errFormat: (line) => `Malformed line (expected "NNNNN word"): ${line}`,
+      errRead: "Could not read the file.",
+      errEmpty: "The file is empty."
+    },
+    it: {
+      importLabel: "Importa lista di parole (.txt)",
+      passphraseLabel: "Passphrase",
+      bits: "bit di entropia",
+      copy: "Copia",
+      generate: "Rigenera",
+      copied: "✓ copiata",
+      numWords: "Numero di parole",
+      separator: "Separatore",
+      capitalization: "Maiuscole",
+      capNone: "Nessuna",
+      capFirst: "Prima lettera maiuscola in ogni parola",
+      capRandom: "Una parola casuale con iniziale maiuscola",
+      digitLabel: "Extra",
+      includeDigit: "Aggiungi una cifra casuale (0–9) a una parola casuale",
+      wordlistLoaded: "Lista memorizzata (7776 parole)",
+      removeWordlist: "Rimuovi",
+      errMarkers: "Marker non trovati. Il file deve contenere BEGIN_word_list_diceware_it-IT e END_word_list_diceware_it-IT su righe separate.",
+      errCount: (n) => `Attese ${EXPECTED_LENGTH} parole tra i marker, trovate ${n}.`,
+      errFormat: (line) => `Riga non valida (atteso "NNNNN parola"): ${line}`,
+      errRead: "Impossibile leggere il file.",
+      errEmpty: "Il file è vuoto."
+    }
+  };
+
+  const lang = (navigator.language || "en").toLowerCase().startsWith("it") ? "it" : "en";
+  const t = T[lang];
+  document.documentElement.lang = lang;
+  document.title = lang === "it"
+    ? "Diceware — Generatore di passphrase in italiano"
+    : "Diceware — Italian passphrase generator";
+
+  // Apply translations. [data-i18n-text] uses textContent (safe); [data-i18n-html]
+  // uses innerHTML with hardcoded, trusted strings from T only.
+  document.querySelectorAll("[data-i18n-text]").forEach(el => {
+    const k = el.getAttribute("data-i18n-text");
+    if (t[k] != null) el.textContent = t[k];
+  });
+  document.querySelectorAll("[data-i18n-html]").forEach(el => {
+    const k = el.getAttribute("data-i18n-html");
+    if (t[k] != null) el.innerHTML = t[k];
+  });
+
+  // --- Secure random ---
+  // Uniform integer in [0, max) using rejection sampling against Uint32.
+  function secureRandomInt(max) {
+    if (!Number.isInteger(max) || max <= 0 || max > 0x100000000) {
+      throw new RangeError("max out of bounds");
+    }
+    const UINT32 = 0x100000000;
+    const limit = Math.floor(UINT32 / max) * max;
+    const buf = new Uint32Array(1);
+    // Expected iterations: < 2. Guard against pathological loops anyway.
+    for (let i = 0; i < 1000; i++) {
+      crypto.getRandomValues(buf);
+      if (buf[0] < limit) return buf[0] % max;
+    }
+    throw new Error("RNG failed to produce an unbiased value");
+  }
+
+  // --- Wordlist parsing ---
+  function parseWordlist(text) {
+    if (!text || !text.length) throw new Error(t.errEmpty);
+    const lines = text.split(/\r?\n/);
+    let beginIdx = -1, endIdx = -1;
+    for (let i = 0; i < lines.length; i++) {
+      const s = lines[i].trim();
+      if (beginIdx === -1 && s === BEGIN_MARKER) beginIdx = i;
+      else if (beginIdx !== -1 && s === END_MARKER) { endIdx = i; break; }
+    }
+    if (beginIdx === -1 || endIdx === -1) throw new Error(t.errMarkers);
+
+    const words = [];
+    for (let i = beginIdx + 1; i < endIdx; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+      const parts = line.split(/\s+/);
+      if (parts.length < 2 || !/^\d{5}$/.test(parts[0]) || !parts[1]) {
+        throw new Error(t.errFormat(line));
+      }
+      words.push(parts[1]);
+    }
+    if (words.length !== EXPECTED_LENGTH) throw new Error(t.errCount(words.length));
+    return words;
+  }
+
+  // --- State ---
+  let wordlist = null;
+
+  // --- Elements ---
+  const $ = (id) => document.getElementById(id);
+  const importSection = $("import-section");
+  const generatorSection = $("generator-section");
+  const fileInput = $("file-input");
+  const importError = $("import-error");
+  const passphraseEl = $("passphrase");
+  const entropyNumEl = $("entropy-num");
+  const copyBtn = $("copy-btn");
+  const generateBtn = $("generate-btn");
+  const copyFeedback = $("copy-feedback");
+  const numWordsEl = $("num-words");
+  const separatorEl = $("separator");
+  const includeDigitEl = $("include-digit");
+  const removeWordlistBtn = $("remove-wordlist-btn");
+
+  // --- Generation ---
+  function capitalize(word) {
+    if (!word) return word;
+    // Use Array.from to correctly handle surrogate pairs / accented chars.
+    const chars = Array.from(word);
+    chars[0] = chars[0].toUpperCase();
+    return chars.join("");
+  }
+
+  function generate() {
+    if (!wordlist) return;
+
+    const numWords = parseInt(numWordsEl.value, 10);
+    const separator = separatorEl.value;
+    const capMode = (document.querySelector('input[name="cap"]:checked') || {}).value || "none";
+    const includeDigit = includeDigitEl.checked;
+
+    const words = new Array(numWords);
+    for (let i = 0; i < numWords; i++) {
+      words[i] = wordlist[secureRandomInt(EXPECTED_LENGTH)];
+    }
+
+    if (capMode === "first") {
+      for (let i = 0; i < numWords; i++) words[i] = capitalize(words[i]);
+    } else if (capMode === "random") {
+      const idx = secureRandomInt(numWords);
+      words[idx] = capitalize(words[idx]);
+    }
+
+    if (includeDigit) {
+      const idx = secureRandomInt(numWords);
+      const digit = secureRandomInt(10);
+      words[idx] = words[idx] + String(digit);
+    }
+
+    const passphrase = words.join(separator);
+    const entropy = Math.log2(EXPECTED_LENGTH) * numWords;
+
+    passphraseEl.textContent = passphrase;
+    entropyNumEl.textContent = entropy.toFixed(2);
+  }
+
+  // --- Copy ---
+  let copyTimer = null;
+  async function copyToClipboard() {
+    const text = passphraseEl.textContent;
+    if (!text) return;
+    let ok = false;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+        ok = true;
+      }
+    } catch { /* fall through to fallback */ }
+    if (!ok) {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.top = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      try { ok = document.execCommand("copy"); } catch { ok = false; }
+      document.body.removeChild(ta);
+    }
+    if (ok) {
+      copyFeedback.classList.add("visible");
+      clearTimeout(copyTimer);
+      copyTimer = setTimeout(() => copyFeedback.classList.remove("visible"), 1500);
+    }
+  }
+
+  // --- Wordlist lifecycle ---
+  function showGenerator() {
+    importSection.hidden = true;
+    generatorSection.hidden = false;
+    generate();
+  }
+
+  function showImport() {
+    generatorSection.hidden = true;
+    importSection.hidden = false;
+    passphraseEl.textContent = "";
+    entropyNumEl.textContent = "0";
+    importError.hidden = true;
+    importError.textContent = "";
+    fileInput.value = "";
+  }
+
+  function tryLoadCached() {
+    let raw = null;
+    try { raw = localStorage.getItem(STORAGE_KEY); } catch { return false; }
+    if (!raw) return false;
+    try {
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed) || parsed.length !== EXPECTED_LENGTH) throw 0;
+      for (let i = 0; i < parsed.length; i++) {
+        if (typeof parsed[i] !== "string" || !parsed[i]) throw 0;
+      }
+      wordlist = parsed;
+      return true;
+    } catch {
+      try { localStorage.removeItem(STORAGE_KEY); } catch {}
+      return false;
+    }
+  }
+
+  function handleFile(file) {
+    importError.hidden = true;
+    importError.textContent = "";
+    const reader = new FileReader();
+    reader.onerror = () => {
+      importError.textContent = t.errRead;
+      importError.hidden = false;
+    };
+    reader.onload = () => {
+      try {
+        const parsed = parseWordlist(String(reader.result || ""));
+        wordlist = parsed;
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+        } catch {
+          // Non-fatal: cache write failed (quota, private mode, disabled).
+          // The generator still works for this session.
+        }
+        showGenerator();
+      } catch (err) {
+        importError.textContent = (err && err.message) ? err.message : String(err);
+        importError.hidden = false;
+      }
+    };
+    reader.readAsText(file, "UTF-8");
+  }
+
+  // --- Wiring ---
+  fileInput.addEventListener("change", (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) handleFile(file);
+  });
+
+  generateBtn.addEventListener("click", generate);
+  copyBtn.addEventListener("click", copyToClipboard);
+
+  numWordsEl.addEventListener("change", generate);
+  separatorEl.addEventListener("input", generate);
+  includeDigitEl.addEventListener("change", generate);
+  document.querySelectorAll('input[name="cap"]').forEach(el => {
+    el.addEventListener("change", generate);
+  });
+
+  removeWordlistBtn.addEventListener("click", () => {
+    try { localStorage.removeItem(STORAGE_KEY); } catch {}
+    wordlist = null;
+    showImport();
+  });
+
+  // --- Init ---
+  if (tryLoadCached()) showGenerator();
+  else showImport();
+})();
+</script>
+</body>
+</html>
