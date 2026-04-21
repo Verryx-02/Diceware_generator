@@ -3,7 +3,8 @@
 A single-file, offline, zero-dependency HTML generator for strong passphrases.
 
 
-Tarin Gamberini's Italian Diceware wordlist.
+> [!NOTE]
+> Try it [here](https://verryx-02.github.io/Diceware_generator/dicewareGenerator.html). You only have to upload the wordlist. 
 
 ## What is Diceware
 
