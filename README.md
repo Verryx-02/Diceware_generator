@@ -54,3 +54,12 @@ Because you supply the wordlist file yourself, you can verify it directly before
 **Locally:** download `diceware.html`, open it in any browser, and import the wordlist file.
 
 On first load you will be asked to import the wordlist. From then on, the browser remembers it until you remove it or clear site data.
+
+## License
+
+The source code of this project is licensed under the [MIT License](LICENSE).
+
+The Italian Diceware wordlist (`wordlist/word_list_diceware_it-IT.txt`) is authored by
+[Tarin Gamberini](https://www.taringamberini.com) and is licensed under the
+[GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0.html).
+The wordlist is redistributed here unmodified, in compliance with its license terms. 
