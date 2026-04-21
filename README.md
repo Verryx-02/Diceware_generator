@@ -41,7 +41,6 @@ Download the italian wordlist here: <https://www.taringamberini.com/en/diceware_
 - **Randomness**: every random choice: word indices, the position of the capitalized word, the position and value of the appended digit — comes from `crypto.getRandomValues()`.
 - **No network requests** at runtime. Everything runs in the browser. The page contains no external fonts, CDNs, analytics, or third-party scripts, and sets `<meta name="referrer" content="no-referrer">`.
 - **Persistent storage is limited to the wordlist.** Only the imported wordlist is written to `localStorage`, under the key `diceware-it-wordlist-v4`. No passphrases, no history, and no settings are persisted.
-- **Wordlist source provided**: Italian Diceware wordlist v4 by Tarin Gamberini, <https://www.taringamberini.com/en/diceware_it_IT/italian-diceware-word-list>, licensed **GPL**.
 
 ## Wordlist verification
 
