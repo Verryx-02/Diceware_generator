@@ -34,8 +34,6 @@ The imported file must satisfy the following rules:
 3. Every non-empty line *between* the markers has the format `NNNNN word` — five digits, whitespace, one word with no internal spaces.
 4. Exactly **7776** words between the markers.
 
-Download the italian wordlist here: <https://www.taringamberini.com/en/diceware_it_IT/italian-diceware-word-list>
-
 ## Security notes
 
 - **Randomness**: every random choice: word indices, the position of the capitalized word, the position and value of the appended digit — comes from `crypto.getRandomValues()`.
@@ -47,7 +45,7 @@ Download the italian wordlist here: <https://www.taringamberini.com/en/diceware_
 Because you supply the wordlist file yourself, you can verify it directly before importing it. Recommended checks:
 
 - **Inspect the file** in any text editor; it is plain text.
-- **Compare it against the original** from Gamberini's website using `sha256sum` on both copies and checking that the digests match.
+- **Compare the italian list against the original** from Gamberini's website using `sha256sum` on both copies and checking that the digests match. You can find the file [here](https://www.taringamberini.com/)
 
 ## How to use
 
